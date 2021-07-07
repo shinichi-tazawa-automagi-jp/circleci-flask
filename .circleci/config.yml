@@ -4,27 +4,78 @@ version: 2.1
 # Common
 #########
 orbs:
-  heroku: circleci/heroku@1.0.1
+  aws-code-build: circleci/aws-code-build@2.0.0
+  aws-code-deploy: circleci/aws-code-deploy@2.0.0
+  terraform: circleci/terraform@2.1.0
+  aws-cli: circleci/aws-cli@2.0
 
 ############
 # Workflows
 ############
+
 workflows:
   version: 2
   build-deploy:
     jobs:
-      - build
-      - deploy:
-          requires:
-            - build
-          filters:
-            branches:
-              only: master
+      - build-ami:
+          context: AMI
+#      - deploy:
+#          requires:
+#            - build
+#          filters:
+#            branches:
+#              only: master
+#  deploy_infrastructure:
+#    jobs:
+#      - terraform/fmt:
+#          checkout: true
+#          context: terraform
+#      - terraform/validate:
+#          checkout: true
+#          context: terraform
+#          requires:
+#            - terraform/fmt
+#      - terraform/plan:
+#          checkout: true
+#          context: terraform
+#          persist-workspace: true
+#          requires:
+#            - terraform/validate
+#      - terraform/apply:
+#          attach-workspace: true
+#          context: terraform
+#          filters:
+#            branches:
+#              only: master
+#          requires:
+#            - terraform/plan
+
+#  deploy_application:
+#    jobs:
+#      - aws-code-deploy/deploy:
+#          application-name: myApplication
+#          bundle-bucket: myApplicationS3Bucket
+#          bundle-key: myS3BucketKey
+#          deployment-group: myDeploymentGroup
+#          service-role-arn: myDeploymentGroupRoleARN
 
 ##################
 # Job Definitions
 ##################
 jobs:
+  build-ami:
+    docker:
+      - image: hashicorp/packer:1.3.3
+    working_directory: ~/packer
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/packer
+      - run:
+          name: Build
+          command: packer build aws-linux.pkr.hcl
+          no_output_timeout: 30m
+
   build:
     docker:
       - image: circleci/python:3.6.2-stretch-browsers
@@ -70,7 +121,7 @@ jobs:
           path: test-reports/
 
   deploy:
-    executor: heroku/default
+    executor: aws-cli/default
     steps:
       - checkout
       - add_ssh_keys:
@@ -80,3 +131,10 @@ jobs:
       - heroku/deploy-via-git:
           force: true
 
+  aws-cli-deploy:
+    executor: aws-cli/default
+    steps:
+      - checkout
+      - aws-cli/setup:
+          profile-name: example
+      - run: echo "Run your code here"
