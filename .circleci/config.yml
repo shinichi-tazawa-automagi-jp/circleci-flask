@@ -4,7 +4,6 @@ version: 2.1
 # Common
 #########
 orbs:
-  aws-code-build: circleci/aws-code-build@2.0.0
   aws-code-deploy: circleci/aws-code-deploy@2.0.0
   terraform: circleci/terraform@2.1.0
   aws-cli: circleci/aws-cli@2.0
@@ -19,12 +18,12 @@ workflows:
     jobs:
       - build-ami:
           context: AMI
-      - deploy:
-          requires:
-            - build
-          filters:
-            branches:
-              only: master
+#      - deploy:
+#          requires:
+#            - build
+#          filters:
+#            branches:
+#              only: master
 #  deploy_infrastructure:
 #    jobs:
 #      - terraform/fmt:
@@ -120,10 +119,10 @@ jobs:
       - store_test_results:
           path: test-reports/
 
-  deploy:
-    executor: aws-cli/default
-    steps:
-      - checkout
-      - aws-cli/setup:
-          profile-name: example
-      - run: echo "Run your code here"
+#  deploy:
+#    executor: aws-cli/default
+#    steps:
+#      - checkout
+#      - aws-cli/setup:
+#          profile-name: example
+#      - run: echo "Run your code here"
