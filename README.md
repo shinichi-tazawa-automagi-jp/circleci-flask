@@ -55,8 +55,10 @@ See the `tests` directory for details.
 `python manage.py test` to run the tests locally.
 
 
-## TODO
+## TODO 
 
+
+- circle ci
 - add parallelization
 - test with multiple python versions
 - run with coverage on CircleCI
