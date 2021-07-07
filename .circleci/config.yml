@@ -14,10 +14,27 @@ orbs:
 
 workflows:
   version: 2
-  build-deploy:
+  build:
     jobs:
       - build-ami:
-          context: AMI
+          context: context
+
+  test-deploy:
+    jobs:
+      - test:
+          context: context
+          requires:
+            - build
+      - hold:
+          type: approval # UI 上に手動承認ボタンを表示させる
+          requires:
+            - build
+      - deploy:
+          context: context
+          requires:
+            - build
+            - hold
+            - test
 #      - deploy:
 #          requires:
 #            - build
@@ -119,10 +136,14 @@ jobs:
       - store_test_results:
           path: test-reports/
 
-#  deploy:
-#    executor: aws-cli/default
-#    steps:
-#      - checkout
-#      - aws-cli/setup:
-#          profile-name: example
-#      - run: echo "Run your code here"
+    deploy:
+      docker:
+        - image: circleci/python:3.7-stretch
+      working_directory: ~/circleci-docs
+      steps:
+        - run:
+            name: awscli のインストール
+            command: sudo pip install awscli
+        - run:
+            name: S3 へのデプロイ
+            command: aws s3 sync jekyll/_site/docs s3://circle-production-static-site/docs/ --delete
