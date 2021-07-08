@@ -62,7 +62,7 @@ build {
       "sudo yum update -y",
       "echo \"FOO is $FOO\" > example.txt",
       "sudo yum -y install gcc git",
-      "sudo yum -y install nginx",
+      "sudo amazon-linux-extras install nginx1.12",
       "sudo yum -y install python3",
       "sudo yum -y install python3-devel",
 //      "python3 -m venv python_venv",
