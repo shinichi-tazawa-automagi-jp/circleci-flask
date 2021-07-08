@@ -7,14 +7,25 @@ packer {
   }
 }
 
+variable "aws_access_key" {
+  type    = string
+  default = ""
+  sensitive = true
+}
+variable "aws_secret_key" {
+  type    = string
+  default = ""
+  sensitive = true
+}
+
 variable "ami_prefix" {
   type    = string
   default = "packer-linux-aws-redis"
 }
 
 source "amazon-ebs" "linux" {
-  access_key    = "${env .aws_access_key}"
-  secret_key    = "${env .aws_secret_key}"
+  access_key    = "${var.aws_access_key}"
+  secret_key    = "${var.aws_secret_key}"
   ami_name      = "${var.ami_prefix}-${formatdate("YYYYMMDDhhmm", timestamp())}"
   instance_type = "t2.micro"
   region        = "ap-northeast-1"
