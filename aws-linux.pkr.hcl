@@ -21,10 +21,6 @@ variable "ami_prefix" {
   default = "packer-linux-aws-redis"
 }
 
-source "amazon-ebs" "example" {
-
-}
-
 source "amazon-ebs" "linux" {
   access_key    = "${var.aws_access_key}"
   secret_key    = "${var.aws_secret_key}"
