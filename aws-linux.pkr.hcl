@@ -58,10 +58,10 @@ build {
     inline = [
       "echo Installing Redis and nginx",
       "sleep 30",
-      "sudo apt-get update",
-      "sudo apt-get install -y redis-server",
+      "sudo yum update",
+      "sudo yum install -y redis-server",
       "echo \"FOO is $FOO\" > example.txt",
-      "sudo apt-get install -y nginx",
+      "sudo yum install -y nginx",
     ]
   }
 
