@@ -90,7 +90,7 @@ jobs:
       - run:
           name: Build
           command: |
-            packer init
+            packer init aws-linux.pkr.hcl
             packer build aws-linux.pkr.hcl
           no_output_timeout: 30m
 
