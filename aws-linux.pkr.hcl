@@ -58,6 +58,7 @@ build {
     inline = [
       "echo Installing nginx",
       "sleep 30",
+      "sudo yum clean all",
       "sudo yum update -y",
       "echo \"FOO is $FOO\" > example.txt",
       "sudo yum install gcc git",
