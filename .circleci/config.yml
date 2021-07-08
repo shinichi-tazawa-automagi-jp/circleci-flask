@@ -81,7 +81,7 @@ workflows:
 jobs:
   build-ami:
     docker:
-      - image: hashicorp/packer
+      - image: hashicorp/packer:latest
     working_directory: ~/
     steps:
       - checkout
