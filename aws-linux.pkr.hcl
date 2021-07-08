@@ -56,12 +56,17 @@ build {
       "FOO=hello world",
     ]
     inline = [
-      "echo Installing Redis and nginx",
+      "echo Installing nginx",
       "sleep 30",
       "sudo yum update -y",
-      "sudo yum install -y redis-server",
       "echo \"FOO is $FOO\" > example.txt",
-      "sudo yum install -y nginx",
+      "sudo yum install gcc git",
+      "sudo amazon-linux-extras install nginx1",
+      "sudo yum install python3",
+      "sudo yum -y install python3-devel",
+//      "python3 -m venv python_venv",
+//      "source ./python_venv/bin/activate",
+      "pip3 install uwsgi",
     ]
   }
 
