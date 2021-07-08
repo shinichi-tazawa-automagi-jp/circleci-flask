@@ -1,32 +1,149 @@
 version: 2.1
 
+##########
+# Common
+#########
 orbs:
+  aws-code-deploy: circleci/aws-code-deploy@2.0.0
+  terraform: circleci/terraform@2.1.0
+  aws-cli: circleci/aws-cli@2.0
+
+############
+# Workflows
+############
 
 workflows:
-  build-and-test:  # This is the name of the workflow, feel free to change it to better match your workflow.
-    # Inside the workflow, you define the jobs you want to run. 
-    # For more details on extending your workflow, see the configuration docs: https://circleci.com/docs/2.0/configuration-reference/#workflows 
-    build-and-test:
+  version: 2
+  build:
+    jobs:
+      - build-ami:
+          context: context
 
+  # test-deploy:
+  #   jobs:
+  #     - test:
+  #         context: context
+  #         requires:
+  #           - build
+  #     - hold:
+  #         type: approval # UI 上に手動承認ボタンを表示させる
+  #         requires:
+  #           - build
+      # - deploy:
+      #     context: context
+      #     requires:
+      #       - build
+      #       - hold
+      #       - test
+#      - deploy:
+#          requires:
+#            - build
+#          filters:
+#            branches:
+#              only: master
+#  deploy_infrastructure:
+#    jobs:
+#      - terraform/fmt:
+#          checkout: true
+#          context: terraform
+#      - terraform/validate:
+#          checkout: true
+#          context: terraform
+#          requires:
+#            - terraform/fmt
+#      - terraform/plan:
+#          checkout: true
+#          context: terraform
+#          persist-workspace: true
+#          requires:
+#            - terraform/validate
+#      - terraform/apply:
+#          attach-workspace: true
+#          context: terraform
+#          filters:
+#            branches:
+#              only: master
+#          requires:
+#            - terraform/plan
 
+#  deploy_application:
+#    jobs:
+#      - aws-code-deploy/deploy:
+#          application-name: myApplication
+#          bundle-bucket: myApplicationS3Bucket
+#          bundle-key: myS3BucketKey
+#          deployment-group: myDeploymentGroup
+#          service-role-arn: myDeploymentGroupRoleARN
+
+##################
+# Job Definitions
+##################
 jobs:
-  build-and-test:  # This is the name of the job, feel free to change it to better match what you're trying to do!
-    # These next lines defines a Docker executors: https://circleci.com/docs/2.0/executor-types/
-    # You can specify an image from Dockerhub or use one of the convenience images from CircleCI's Developer Hub
-    # A list of available CircleCI Docker convenience images are available here: https://circleci.com/developer/images/image/cimg/python
-    # The executor is the environment in which the steps below will be executed - below will use a python 3.9 container
-    # Change the version below to your required version of python
+  build-ami:
     docker:
-      - image: cimg/python:3.8
-    # Checkout the code as the first step. This is a dedicated CircleCI step.
-    # The python orb's install-packages step will install the dependencies from a Pipfile via Pipenv by default.
-    # Here we're making sure we use just use the system-wide pip. By default it uses the project root's requirements.txt.
-    # Then run your tests!
-    # CircleCI will report the results back to your VCS provider.
+      - image: hashicorp/packer:1.3.3
+    working_directory: ~/
     steps:
       - checkout
-      - python/install-packages:
-          pkg-manager: pip
-          # app-dir: ~/project/package-directory/  # If you're requirements.txt isn't in the root directory.
-          # pip-dependency-file: test-requirements.txt  # if you have a different name for your requirements file, maybe one that combines your runtime and test requirements.
+      - attach_workspace:
+          at: ~/
       - run:
+          name: Build
+          command: packer build aws-linux.pkr.hcl
+          no_output_timeout: 30m
+
+  build:
+    docker:
+      - image: circleci/python:3.6.2-stretch-browsers
+        environment:
+          FLASK_CONFIG: testing
+          TEST_DATABASE_URL: postgresql://ubuntu@localhost/circle_test?sslmode=disable
+      - image: circleci/postgres:9.6.5-alpine-ram
+        environment:
+          POSTGRES_USER: ubuntu
+          POSTGRES_DB: circle_test
+          POSTGRES_PASSWORD: ''
+    steps:
+      - checkout
+      - run: mkdir test-reports
+      - run:
+          name: Download Selenium
+          command: |
+            curl -O http://selenium-release.storage.googleapis.com/3.5/selenium-server-standalone-3.5.3.jar
+      - run:
+          name: Start Selenium
+          command: |
+            java -jar selenium-server-standalone-3.5.3.jar -log test-reports/selenium.log
+          background: true
+      - restore_cache:
+          key: deps2-{{ checksum "requirements/dev.txt" }}
+      - run:
+          command: |
+            python3 -m venv venv
+            . venv/bin/activate
+            pip install -r requirements/dev.txt
+      - save_cache:
+          key: deps2-{{ checksum "requirements/dev.txt" }}
+          paths:
+            - 'venv'
+      - run:
+          command: |
+            . venv/bin/activate
+            python manage.py test
+      - store_artifacts:
+          path: test-reports/
+          destination: tr1
+      - store_test_results:
+          path: test-reports/
+
+    # deploy:
+    #   docker:
+    #     - image: circleci/python:3.7-stretch
+    #   working_directory: ~/circleci-docs
+    #   steps:
+    #     - run:
+    #         name: awscli のインストール
+    #         command: sudo pip install awscli
+    #     - run:
+    #         name: S3 へのデプロイ
+    #         command: aws s3 sync jekyll/_site/docs s3://circle-production-static-site/docs/ --delete
