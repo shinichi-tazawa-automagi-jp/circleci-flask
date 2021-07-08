@@ -19,22 +19,22 @@ workflows:
       - build-ami:
           context: context
 
-  test-deploy:
-    jobs:
-      - test:
-          context: context
-          requires:
-            - build
-      - hold:
-          type: approval # UI 上に手動承認ボタンを表示させる
-          requires:
-            - build
-      - deploy:
-          context: context
-          requires:
-            - build
-            - hold
-            - test
+#      - test:
+#          context: context
+#          requires:
+#            - build-ami
+#  deploy:
+#    jobs:
+#      - hold:
+#          type: approval # UI 上に手動承認ボタンを表示させる
+#          requires:
+#            - build
+#      - deploy:
+#          context: context
+#          requires:
+#            - build
+#            - hold
+#            - test
 #      - deploy:
 #          requires:
 #            - build
@@ -92,7 +92,7 @@ jobs:
           command: packer build aws-linux.pkr.hcl
           no_output_timeout: 30m
 
-  build:
+  test:
     docker:
       - image: circleci/python:3.6.2-stretch-browsers
         environment:
@@ -136,14 +136,14 @@ jobs:
       - store_test_results:
           path: test-reports/
 
-    deploy:
-      docker:
-        - image: circleci/python:3.7-stretch
-      working_directory: ~/circleci-docs
-      steps:
-        - run:
-            name: awscli のインストール
-            command: sudo pip install awscli
-        - run:
-            name: S3 へのデプロイ
-            command: aws s3 sync jekyll/_site/docs s3://circle-production-static-site/docs/ --delete
+  deploy:
+    docker:
+      - image: circleci/python:3.7-stretch
+    working_directory: ~/circleci-docs
+    steps:
+      - run:
+          name: awscli のインストール
+          command: sudo pip install awscli
+      - run:
+          name: S3 へのデプロイ
+          command: aws s3 sync jekyll/_site/docs s3://circle-production-static-site/docs/ --delete
