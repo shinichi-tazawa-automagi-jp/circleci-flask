@@ -107,7 +107,7 @@ jobs:
           tag: '${CIRCLE_SHA1}'
 #          context: context
           create-repo: true
-          dockerfile: myDockerfile
+#          dockerfile: Dockerfile
           no-output-timeout: 20m
           path: ./
           profile-name: default
