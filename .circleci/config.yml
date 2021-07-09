@@ -36,6 +36,9 @@ jobs:
       - checkout
       - attach_workspace:
           at: ~/
+      - setup_remote_docker:
+          version: 19.03.13
+          docker_layer_caching: true
       - run:
           name: Build
           command: |
@@ -57,6 +60,9 @@ jobs:
           POSTGRES_PASSWORD: ''
     steps:
       - checkout
+      - setup_remote_docker:
+          version: 19.03.13
+          docker_layer_caching: true
       - run: mkdir test-reports
       - run:
           name: Start Selenium
@@ -100,8 +106,6 @@ jobs:
     docker:
       - image: 'cimg/python:3.9.1'
     steps:
-      - setup_remote_docker:
-        version: 19.03.13
       - aws-ecr/build-and-push-image:
           account-url: AWS_ECR_ACCOUNT_URL
           region: AWS_DEFAULT_REGION
