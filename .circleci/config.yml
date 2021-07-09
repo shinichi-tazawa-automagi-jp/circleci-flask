@@ -103,7 +103,7 @@ jobs:
       - aws-ecr/build-and-push-image:
           account-url: AWS_ECR_ACCOUNT_URL
           region: AWS_DEFAULT_REGION
-          repo: APP_PREFIX
+          repo: 'circleci'
           tag: '${CIRCLE_SHA1}'
 #          context: context
           create-repo: true
