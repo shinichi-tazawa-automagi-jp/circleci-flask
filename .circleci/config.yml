@@ -103,9 +103,9 @@ jobs:
       - image: 'cimg/python:3.9.1'
     steps:
       - aws-ecr/build-and-push-image:
-          account-url: '${AWS_ECR_ACCOUNT_URL}'
-          region: '${AWS_DEFAULT_REGION}'
-          repo: '${APP_PREFIX}'
+          account-url: AWS_ECR_ACCOUNT_URL
+          region: AWS_DEFAULT_REGION
+          repo: APP_PREFIX
           tag: '${CIRCLE_SHA1}'
       - aws-ecs/deploy-service-update:
           cluster-name: '${APP_PREFIX}-cluster'
