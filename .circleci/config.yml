@@ -107,12 +107,12 @@ jobs:
           region: AWS_DEFAULT_REGION
           repo: APP_PREFIX
           tag: '${CIRCLE_SHA1}'
-      - aws-ecs/deploy-service-update:
-          cluster-name: '${APP_PREFIX}-cluster'
-          container-image-name-updates: 'container=${APP_PREFIX}-service,tag=${CIRCLE_SHA1}'
-          family: '${APP_PREFIX}-service'
-          requires:
-            - aws-ecr/build-and-push-image
+#      - aws-ecs/deploy-service-update:
+#          cluster-name: '${APP_PREFIX}-cluster'
+#          container-image-name-updates: 'container=${APP_PREFIX}-service,tag=${CIRCLE_SHA1}'
+#          family: '${APP_PREFIX}-service'
+#          requires:
+#            - aws-ecr/build-and-push-image
       - aws-ecs/run-task:
           awsvpc: true
           cluster: cluster1
