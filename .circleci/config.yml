@@ -132,8 +132,6 @@ workflows:
     jobs:
       - hold:
           type: approval # UI 上に手動承認ボタンを表示させる
-          requires:
-            - build
       - ecs-deploy:
           requires:
             - hold
