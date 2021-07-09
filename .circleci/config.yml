@@ -115,9 +115,9 @@ jobs:
 #            - aws-ecr/build-and-push-image
       - aws-ecs/run-task:
           awsvpc: true
-          cluster: cluster1
+          cluster: circleci-cluster
           launch-type: EC2
-          task-definition: myapp
+          task-definition: circleci-task
 
 
 ############
