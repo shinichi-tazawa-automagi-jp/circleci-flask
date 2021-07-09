@@ -104,7 +104,7 @@ jobs:
     steps:
       - aws-ecr/build-and-push-image:
           account-url: '${AWS_ECR_ACCOUNT_URL}'
-          region: ap-northeast-1
+          region: '${AWS_DEFAULT_REGION}'
           repo: '${APP_PREFIX}'
           tag: '${CIRCLE_SHA1}'
       - aws-ecs/deploy-service-update:
