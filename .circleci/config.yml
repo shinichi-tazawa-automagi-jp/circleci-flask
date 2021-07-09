@@ -17,7 +17,7 @@ jobs:
   build-ami:
     docker:
       - image: hashicorp/packer:latest
-    working_directory: ~/
+    working_directory: ~/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
       - checkout
       - attach_workspace:
@@ -31,7 +31,7 @@ jobs:
   build:
     docker:
       - image: circleci/python:3.8
-    working_directory: ~/
+    working_directory: ~/{{ORG_NAME}}/{{REPO_NAME}}
     steps:
       - checkout
       - attach_workspace:
