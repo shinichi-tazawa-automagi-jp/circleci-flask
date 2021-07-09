@@ -99,6 +99,8 @@ jobs:
           command: aws s3 sync jekyll/_site/docs s3://circle-production-static-site/docs/ --delete
 
   ecs-deploy:
+    docker:
+      - image: 'cimg/python:3.9.1'
     steps:
       - aws-ecr/build-and-push-image:
           account-url: '${AWS_ECR_ACCOUNT_URL}'
@@ -111,6 +113,11 @@ jobs:
           family: '${APP_PREFIX}-service'
           requires:
             - aws-ecr/build-and-push-image
+      - aws-ecs/run-task:
+          awsvpc: true
+          cluster: cluster1
+          launch-type: EC2
+          task-definition: myapp
 
 
 ############
