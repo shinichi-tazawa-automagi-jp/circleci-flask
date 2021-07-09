@@ -5,75 +5,10 @@ version: 2.1
 #########
 orbs:
   aws-code-deploy: circleci/aws-code-deploy@2.0.0
-  terraform: circleci/terraform@2.1.0
+  aws-ecr: circleci/aws-ecr@6.15
+  aws-ecs: circleci/aws-ecs@2.0.0
   aws-cli: circleci/aws-cli@2.0
-
-############
-# Workflows
-############
-
-workflows:
-  version: 2
-  build:
-    jobs:
-      - build-ami:
-          context: context
-
-#      - test:
-#          context: context
-#          requires:
-#            - build-ami
-#  deploy:
-#    jobs:
-#      - hold:
-#          type: approval # UI 上に手動承認ボタンを表示させる
-#          requires:
-#            - build
-#      - deploy:
-#          context: context
-#          requires:
-#            - build
-#            - hold
-#            - test
-#      - deploy:
-#          requires:
-#            - build
-#          filters:
-#            branches:
-#              only: master
-#  deploy_infrastructure:
-#    jobs:
-#      - terraform/fmt:
-#          checkout: true
-#          context: terraform
-#      - terraform/validate:
-#          checkout: true
-#          context: terraform
-#          requires:
-#            - terraform/fmt
-#      - terraform/plan:
-#          checkout: true
-#          context: terraform
-#          persist-workspace: true
-#          requires:
-#            - terraform/validate
-#      - terraform/apply:
-#          attach-workspace: true
-#          context: terraform
-#          filters:
-#            branches:
-#              only: master
-#          requires:
-#            - terraform/plan
-
-#  deploy_application:
-#    jobs:
-#      - aws-code-deploy/deploy:
-#          application-name: myApplication
-#          bundle-bucket: myApplicationS3Bucket
-#          bundle-key: myS3BucketKey
-#          deployment-group: myDeploymentGroup
-#          service-role-arn: myDeploymentGroupRoleARN
+  terraform: circleci/terraform@2.1.0
 
 ##################
 # Job Definitions
@@ -93,10 +28,23 @@ jobs:
             packer init aws-linux.pkr.hcl
             packer build aws-linux.pkr.hcl
           no_output_timeout: 30m
-
+  build:
+    docker:
+      - image: circleci/python:3.8
+    working_directory: ~/
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Build
+          command: |
+            pip install requirements.txt
+            python manage.py
+          no_output_timeout: 30m
   test:
     docker:
-      - image: circleci/python:3.6.2-stretch-browsers
+      - image: circleci/python:3.8
         environment:
           FLASK_CONFIG: testing
           TEST_DATABASE_URL: postgresql://ubuntu@localhost/circle_test?sslmode=disable
@@ -138,9 +86,9 @@ jobs:
       - store_test_results:
           path: test-reports/
 
-  deploy:
+  ec2-deploy:
     docker:
-      - image: circleci/python:3.7-stretch
+      - image: circleci/python:3.8
     working_directory: ~/circleci-docs
     steps:
       - run:
@@ -149,3 +97,56 @@ jobs:
       - run:
           name: S3 へのデプロイ
           command: aws s3 sync jekyll/_site/docs s3://circle-production-static-site/docs/ --delete
+
+  ecs-deploy:
+    steps:
+      - aws-ecr/build-and-push-image:
+          account-url: '${AWS_ECR_ACCOUNT_URL}'
+          region: ap-northeast-1
+          repo: '${APP_PREFIX}'
+          tag: '${CIRCLE_SHA1}'
+      - aws-ecs/deploy-service-update:
+          cluster-name: '${APP_PREFIX}-cluster'
+          container-image-name-updates: 'container=${APP_PREFIX}-service,tag=${CIRCLE_SHA1}'
+          family: '${APP_PREFIX}-service'
+          requires:
+            - aws-ecr/build-and-push-image
+
+
+############
+# Workflows
+############
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          context: context
+
+      - test:
+          context: context
+          requires:
+            - build
+  deploy:
+    jobs:
+      - hold:
+          type: approval # UI 上に手動承認ボタンを表示させる
+          requires:
+            - build
+      - ecs-deploy:
+          requires:
+            - hold
+#          filters:
+#            branches:
+#              only: master
+
+
+#  deploy_application:
+#    jobs:
+#      - aws-code-deploy/deploy:
+#          application-name: myApplication
+#          bundle-bucket: myApplicationS3Bucket
+#          bundle-key: myS3BucketKey
+#          deployment-group: myDeploymentGroup
+#          service-role-arn: myDeploymentGroupRoleARN
