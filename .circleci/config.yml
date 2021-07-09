@@ -135,12 +135,12 @@ workflows:
 
       - test:
           context: context
-          requires:
-            - build
+#          requires:
+#            - build
   deploy:
     jobs:
-#      - hold:
-#          type: approval # UI 上に手動承認ボタンを表示させる
+      - hold:
+          type: approval # UI 上に手動承認ボタンを表示させる
       - ecs-deploy:
           requires:
             - hold
